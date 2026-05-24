@@ -1,17 +1,23 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-export default async function middleware(request: Request & { nextUrl: URL }) {
+export async function middleware(request: NextRequest) {
   const token = await getToken({
-    req: request as any,
-    secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET
+    req: request,
+    secret: process.env.AUTH_SECRET,
+    secureCookie: false,
   });
 
   if (!token) {
-    const loginUrl = new URL("/login", request.nextUrl);
-    loginUrl.searchParams.set("callbackUrl", request.nextUrl.pathname);
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set(
+      "callbackUrl",
+      request.nextUrl.pathname + request.nextUrl.search
+    );
+
     return NextResponse.redirect(loginUrl);
   }
+
   return NextResponse.next();
 }
 
@@ -42,5 +48,5 @@ export const config = {
     "/documents/:path*",
     "/calendar/:path*",
     "/notifications/:path*"
-  ]
+  ],
 };

@@ -91,30 +91,49 @@ export const authConfig = {
       }
     })
   ],
-  callbacks: {
-    async jwt({ token, user, account, profile }) {
-      if (account?.provider === "google" && token.email) {
-        const { user: dbUser, membership } = await ensureGoogleUser(token.email, token.name || profile?.name, token.picture || undefined);
-        token.userId = String(dbUser._id);
-        token.organizationId = String(dbUser.activeOrganizationId);
-        token.role = membership?.role || "Owner";
+ callbacks: {
+  async jwt({ token, user, account, profile }) {
+    // Google login
+    if (account?.provider === "google") {
+      const email = token.email || profile?.email || user?.email;
+
+      if (!email) {
+        return token;
       }
 
-      if (user) {
-        token.userId = user.id;
-        token.organizationId = user.organizationId;
-        token.role = user.role;
-      }
+      const { user: dbUser, membership } = await ensureGoogleUser(
+        String(email),
+        token.name || profile?.name || user?.name,
+        token.picture || user?.image || undefined
+      );
+
+      token.userId = String(dbUser._id);
+      token.organizationId = String(dbUser.activeOrganizationId);
+      token.role = membership?.role || "Owner";
 
       return token;
-    },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = String(token.userId || "");
-        session.user.organizationId = String(token.organizationId || "");
-        session.user.role = String(token.role || "Viewer");
-      }
-      return session;
     }
+
+    // Credentials login only
+    if (account?.provider === "credentials" && user) {
+      token.userId = user.id;
+      token.organizationId = user.organizationId;
+      token.role = user.role;
+
+      return token;
+    }
+
+    return token;
+  },
+
+  async session({ session, token }) {
+    if (session.user) {
+      session.user.id = String(token.userId || "");
+      session.user.organizationId = String(token.organizationId || "");
+      session.user.role = String(token.role || "Viewer");
+    }
+
+    return session;
   }
+}
 } satisfies NextAuthConfig;
