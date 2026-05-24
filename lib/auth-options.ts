@@ -5,7 +5,8 @@ import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { connectToDatabase } from "@/lib/db/connect";
 import { Organization, OrganizationMember, User } from "@/lib/db/models";
-import { env } from "@/lib/env";
+import { env, isSuperAdminEmail } from "@/lib/env";
+import { normalizeRole } from "@/lib/permissions";
 
 async function ensureGoogleUser(email: string, name?: string, image?: string) {
   await connectToDatabase();
@@ -109,7 +110,8 @@ export const authConfig = {
 
       token.userId = String(dbUser._id);
       token.organizationId = String(dbUser.activeOrganizationId);
-      token.role = membership?.role || "Owner";
+      token.role = isSuperAdminEmail(String(email)) ? "Super Admin" : normalizeRole(membership?.role || "Owner");
+      token.isSuperAdmin = isSuperAdminEmail(String(email));
 
       return token;
     }
@@ -118,7 +120,8 @@ export const authConfig = {
     if (account?.provider === "credentials" && user) {
       token.userId = user.id;
       token.organizationId = user.organizationId;
-      token.role = user.role;
+      token.role = isSuperAdminEmail(user.email) ? "Super Admin" : normalizeRole(user.role);
+      token.isSuperAdmin = isSuperAdminEmail(user.email);
 
       return token;
     }
@@ -131,6 +134,7 @@ export const authConfig = {
       session.user.id = String(token.userId || "");
       session.user.organizationId = String(token.organizationId || "");
       session.user.role = String(token.role || "Viewer");
+      session.user.isSuperAdmin = Boolean(token.isSuperAdmin);
     }
 
     return session;

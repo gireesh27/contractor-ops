@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 import {
   BadgeIndianRupee,
   BarChart3,
@@ -18,6 +19,7 @@ import {
   FolderOpen,
   HardHat,
   LayoutDashboard,
+  LogOut,
   Menu,
   Moon,
   Package,
@@ -26,7 +28,9 @@ import {
   Search,
   Settings,
   Shield,
+  Sun,
   Truck,
+  UserCircle,
   WalletCards,
   Wrench,
   X
@@ -35,32 +39,31 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["Owner", "Admin", "Project Manager", "Site Engineer", "Accountant", "Viewer"] },
-  { href: "/projects", label: "Projects", icon: Building2, roles: ["Owner", "Admin", "Project Manager", "Site Engineer", "Accountant", "Viewer"] },
-  { href: "/schedule", label: "Schedule", icon: Clock3, roles: ["Owner", "Admin", "Project Manager"] },
-  { href: "/tasks", label: "Tasks", icon: ClipboardCheck, roles: ["Owner", "Admin", "Project Manager", "Site Engineer"] },
-  { href: "/boq", label: "BOQ & Estimates", icon: FileText, roles: ["Owner", "Admin", "Project Manager"] },
-  { href: "/daily-progress", label: "Daily Progress", icon: Wrench, roles: ["Owner", "Admin", "Project Manager", "Site Engineer"] },
-  { href: "/labour", label: "Labour", icon: HardHat, roles: ["Owner", "Admin", "Site Engineer", "Accountant"] },
-  { href: "/materials", label: "Materials", icon: Package, roles: ["Owner", "Admin", "Site Engineer", "Project Manager"] },
-  { href: "/equipment", label: "Equipment", icon: Truck, roles: ["Owner", "Admin", "Site Engineer", "Project Manager"] },
-  { href: "/measurements", label: "Measurements", icon: Ruler, roles: ["Owner", "Admin", "Project Manager", "Site Engineer"] },
-  { href: "/bills", label: "Bills", icon: ReceiptText, roles: ["Owner", "Admin", "Accountant"] },
-  { href: "/payments", label: "Payments", icon: WalletCards, roles: ["Owner", "Admin", "Accountant"] },
-  { href: "/vendors", label: "Vendors", icon: Truck, roles: ["Owner", "Admin", "Accountant"] },
-  { href: "/expenses", label: "Expenses", icon: BadgeIndianRupee, roles: ["Owner", "Admin", "Accountant"] },
-  { href: "/site-photos", label: "Site Photos", icon: Camera, roles: ["Owner", "Admin", "Project Manager", "Site Engineer"] },
-  { href: "/documents", label: "Documents", icon: FolderOpen, roles: ["Owner", "Admin", "Project Manager", "Site Engineer", "Accountant"] },
-  { href: "/reports", label: "Reports", icon: BarChart3, roles: ["Owner", "Admin", "Project Manager", "Site Engineer", "Accountant", "Viewer"] },
-  { href: "/ai-assistant", label: "AI Assistant", icon: Bot, roles: ["Owner", "Admin", "Project Manager", "Site Engineer", "Accountant"] },
-  { href: "/calendar", label: "Calendar", icon: CalendarDays, roles: ["Owner", "Admin", "Project Manager", "Site Engineer", "Accountant"] },
-  { href: "/notifications", label: "Notifications", icon: Bell, roles: ["Owner", "Admin", "Project Manager", "Site Engineer", "Accountant", "Viewer"] },
-  { href: "/billing", label: "Subscription", icon: CreditCard, roles: ["Owner"] },
-  { href: "/settings", label: "Settings", icon: Settings, roles: ["Owner", "Admin"] },
-  { href: "/admin", label: "Admin", icon: Shield, roles: ["Owner"] }
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["Super Admin", "Organization Owner", "Organization Admin", "Owner", "Admin", "Project Manager", "Site Engineer", "Accountant", "Viewer", "Member"] },
+  { href: "/projects", label: "Projects", icon: Building2, roles: ["Super Admin", "Organization Owner", "Organization Admin", "Owner", "Admin", "Project Manager", "Site Engineer", "Accountant", "Viewer", "Member"] },
+  { href: "/schedule", label: "Schedule", icon: Clock3, roles: ["Super Admin", "Organization Owner", "Organization Admin", "Owner", "Admin", "Project Manager"] },
+  { href: "/tasks", label: "Tasks", icon: ClipboardCheck, roles: ["Super Admin", "Organization Owner", "Organization Admin", "Owner", "Admin", "Project Manager", "Site Engineer"] },
+  { href: "/boq", label: "BOQ & Estimates", icon: FileText, roles: ["Super Admin", "Organization Owner", "Organization Admin", "Owner", "Admin", "Project Manager"] },
+  { href: "/daily-progress", label: "Daily Progress", icon: Wrench, roles: ["Super Admin", "Organization Owner", "Organization Admin", "Owner", "Admin", "Project Manager", "Site Engineer"] },
+  { href: "/labour", label: "Labour", icon: HardHat, roles: ["Super Admin", "Organization Owner", "Organization Admin", "Owner", "Admin", "Site Engineer", "Accountant"] },
+  { href: "/materials", label: "Materials", icon: Package, roles: ["Super Admin", "Organization Owner", "Organization Admin", "Owner", "Admin", "Site Engineer", "Project Manager"] },
+  { href: "/equipment", label: "Equipment", icon: Truck, roles: ["Super Admin", "Organization Owner", "Organization Admin", "Owner", "Admin", "Site Engineer", "Project Manager"] },
+  { href: "/measurements", label: "Measurements", icon: Ruler, roles: ["Super Admin", "Organization Owner", "Organization Admin", "Owner", "Admin", "Project Manager", "Site Engineer"] },
+  { href: "/bills", label: "Bills", icon: ReceiptText, roles: ["Super Admin", "Organization Owner", "Organization Admin", "Owner", "Admin", "Accountant"] },
+  { href: "/payments", label: "Payments", icon: WalletCards, roles: ["Super Admin", "Organization Owner", "Organization Admin", "Owner", "Admin", "Accountant"] },
+  { href: "/vendors", label: "Vendors", icon: Truck, roles: ["Super Admin", "Organization Owner", "Organization Admin", "Owner", "Admin", "Accountant"] },
+  { href: "/expenses", label: "Expenses", icon: BadgeIndianRupee, roles: ["Super Admin", "Organization Owner", "Organization Admin", "Owner", "Admin", "Accountant"] },
+  { href: "/site-photos", label: "Site Photos", icon: Camera, roles: ["Super Admin", "Organization Owner", "Organization Admin", "Owner", "Admin", "Project Manager", "Site Engineer"] },
+  { href: "/documents", label: "Documents", icon: FolderOpen, roles: ["Super Admin", "Organization Owner", "Organization Admin", "Owner", "Admin", "Project Manager", "Site Engineer", "Accountant"] },
+  { href: "/reports", label: "Reports", icon: BarChart3, roles: ["Super Admin", "Organization Owner", "Organization Admin", "Owner", "Admin", "Project Manager", "Site Engineer", "Accountant", "Viewer", "Member"] },
+  { href: "/ai-assistant", label: "AI Assistant", icon: Bot, roles: ["Super Admin", "Organization Owner", "Organization Admin", "Owner", "Admin", "Project Manager", "Site Engineer", "Accountant"] },
+  { href: "/calendar", label: "Calendar", icon: CalendarDays, roles: ["Super Admin", "Organization Owner", "Organization Admin", "Owner", "Admin", "Project Manager", "Site Engineer", "Accountant"] },
+  { href: "/notifications", label: "Notifications", icon: Bell, roles: ["Super Admin", "Organization Owner", "Organization Admin", "Owner", "Admin", "Project Manager", "Site Engineer", "Accountant", "Viewer", "Member"] },
+  { href: "/billing", label: "Subscription", icon: CreditCard, roles: ["Super Admin", "Organization Owner", "Owner"] },
+  { href: "/settings", label: "Settings", icon: Settings, roles: ["Super Admin", "Organization Owner", "Organization Admin", "Owner", "Admin"] },
+  { href: "/profile", label: "Profile", icon: UserCircle, roles: ["Super Admin", "Organization Owner", "Organization Admin", "Owner", "Admin", "Project Manager", "Site Engineer", "Accountant", "Viewer", "Member"] },
+  { href: "/admin", label: "Admin", icon: Shield, roles: ["Super Admin"] }
 ];
-
-const bottomItems = navItems.slice(0, 5);
 
 export function AppNav({
   children,
@@ -79,6 +82,8 @@ export function AppNav({
   const [collapsed, setCollapsed] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [dateTime, setDateTime] = useState("");
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [reveal, setReveal] = useState<{ x: number; y: number; dark: boolean } | null>(null);
 
   useEffect(() => {
     const update = () =>
@@ -94,6 +99,23 @@ export function AppNav({
   }, []);
 
   const items = navItems.filter((item) => item.roles.includes(role));
+  const bottomItems = items.slice(0, 5);
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem("contractorops-theme");
+    const preferred = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    setTheme(preferred === "dark" ? "dark" : "light");
+    document.documentElement.classList.toggle("dark", preferred === "dark");
+  }, []);
+
+  function toggleTheme(event: React.MouseEvent<HTMLButtonElement>) {
+    const next = theme === "dark" ? "light" : "dark";
+    setReveal({ x: event.clientX, y: event.clientY, dark: next === "dark" });
+    window.localStorage.setItem("contractorops-theme", next);
+    document.documentElement.classList.toggle("dark", next === "dark");
+    setTheme(next);
+    window.setTimeout(() => setReveal(null), 720);
+  }
 
   const Sidebar = (
     <aside
@@ -135,15 +157,26 @@ export function AppNav({
             );
           })}
         </nav>
+        <div className="border-t border-white/10 p-3">
+          <Link className="mb-2 flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-bold text-white/70 transition hover:bg-white/10 hover:text-white" href="/profile">
+            <UserCircle className="h-5 w-5 text-safety-yellow" aria-hidden="true" />
+            {!collapsed ? <span className="truncate">Profile & account</span> : null}
+          </Link>
+          <button className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm font-bold text-white/70 transition hover:bg-red-500/12 hover:text-white" onClick={() => signOut({ callbackUrl: "/login" })} type="button">
+            <LogOut className="h-5 w-5 text-red-300" aria-hidden="true" />
+            {!collapsed ? <span className="truncate">Logout</span> : null}
+          </button>
+        </div>
       </div>
     </aside>
   );
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(29,78,216,.16),transparent_32%),linear-gradient(180deg,#f8fafc,#eef2f7)] text-slate-950">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(29,78,216,.16),transparent_32%),linear-gradient(180deg,#f8fafc,#eef2f7)] text-slate-950 transition-colors duration-300 dark:bg-[radial-gradient(circle_at_top_left,rgba(250,204,21,.12),transparent_30%),linear-gradient(180deg,#020617,#0f172a)] dark:text-white">
+      {reveal ? <span className={cn("pointer-events-none fixed z-[80] h-8 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full animate-theme-reveal", reveal.dark ? "bg-slate-950" : "bg-white")} style={{ left: reveal.x, top: reveal.y }} /> : null}
       {Sidebar}
       <div className={cn("transition-all duration-300", collapsed ? "lg:pl-20" : "lg:pl-72")}>
-        <header className="sticky top-0 z-30 border-b border-white/70 bg-white/72 px-4 py-3 shadow-sm backdrop-blur-2xl lg:px-6">
+        <header className="sticky top-0 z-30 border-b border-white/70 bg-white/72 px-4 py-3 shadow-sm backdrop-blur-2xl dark:border-white/10 dark:bg-slate-950/76 lg:px-6">
           <div className="flex items-center gap-3">
             <button className="rounded-2xl border border-slate-200 bg-white p-2 lg:hidden" onClick={() => setDrawerOpen(true)} type="button">
               <Menu className="h-5 w-5" aria-hidden="true" />
@@ -157,8 +190,8 @@ export function AppNav({
                 {databaseReady ? "MongoDB live" : "DB setup needed"}
               </span>
               <span className="hidden rounded-full bg-slate-950 px-3 py-1 text-xs font-black text-safety-yellow xl:inline-flex">{dateTime}</span>
-              <button className="rounded-2xl border border-slate-200 bg-white p-3 text-slate-600 hover:text-blueprint" type="button">
-                <Moon className="h-4 w-4" aria-hidden="true" />
+              <button className="rounded-2xl border border-slate-200 bg-white p-3 text-slate-600 transition hover:text-blueprint dark:border-white/10 dark:bg-white/10 dark:text-slate-200" onClick={toggleTheme} type="button" aria-label="Toggle dark mode">
+                {theme === "dark" ? <Sun className="h-4 w-4" aria-hidden="true" /> : <Moon className="h-4 w-4" aria-hidden="true" />}
               </button>
               <Link className="relative rounded-2xl border border-slate-200 bg-white p-3 text-slate-600 hover:text-blueprint" href="/notifications">
                 <Bell className="h-4 w-4" aria-hidden="true" />
@@ -167,7 +200,7 @@ export function AppNav({
               <Link className="hidden h-12 items-center rounded-2xl bg-slate-950 px-4 text-sm font-black text-white shadow-glow sm:inline-flex" href="/projects/new">
                 Quick action
               </Link>
-              <div className="flex h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3">
+              <Link className="flex h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 transition hover:border-blueprint dark:border-white/10 dark:bg-white/10" href="/profile">
                 <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blueprint text-xs font-black text-white">
                   {(userName || "CO").split(" ").map((part) => part[0]).join("").slice(0, 2)}
                 </span>
@@ -175,7 +208,7 @@ export function AppNav({
                   <span className="block max-w-40 truncate text-sm font-black">{organizationName}</span>
                   <span className="block text-xs font-semibold text-slate-500">{role}</span>
                 </span>
-              </div>
+              </Link>
             </div>
           </div>
         </header>
@@ -197,6 +230,10 @@ export function AppNav({
                   </Link>
                 ))}
               </nav>
+              <button className="mt-4 flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm font-bold text-white/75 hover:bg-red-500/15" onClick={() => signOut({ callbackUrl: "/login" })} type="button">
+                <LogOut className="h-5 w-5 text-red-300" aria-hidden="true" />
+                Logout
+              </button>
             </div>
           </div>
         ) : null}

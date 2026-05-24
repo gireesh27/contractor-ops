@@ -5,8 +5,13 @@ import { PremiumMetricCard } from "@/components/premium/PremiumMetricCard";
 import { MotionPage } from "@/components/premium/MotionPage";
 import { RecordGrid } from "@/components/premium/RecordGrid";
 import { getAdminData } from "@/lib/data-access";
+import { getTenantContext } from "@/lib/tenant";
+import { redirect } from "next/navigation";
 
 export default async function AdminPage() {
+  const tenant = await getTenantContext({ required: true });
+  if (!tenant?.isSuperAdmin) redirect("/unauthorized");
+
   const data = await getAdminData();
   return (
     <AppShell>

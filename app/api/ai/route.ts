@@ -14,15 +14,15 @@ export async function POST(request: NextRequest) {
 
   const contentType = request.headers.get("content-type") || "";
   const body = contentType.includes("application/json") ? await request.json() : Object.fromEntries((await request.formData()).entries());
-  const { mode, ...input } = body;
-  const result = await generateAiReport(input, mode);
+  const { mode, provider, ...input } = body;
+  const result = await generateAiReport(input, mode, provider || "auto");
 
   await AIRequestLog.create({
     organizationId: objectId(tenant.organizationId),
     userId: objectId(tenant.userId),
     projectId: input.projectId ? objectId(input.projectId) : undefined,
     feature: mode || "AI report",
-    provider: result.configured ? "configured-provider" : "none",
+    provider: result.configured ? provider || "auto" : "none",
     status: result.configured ? "generated" : "missing-api-key",
     input,
     output: result

@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import Razorpay from "razorpay";
-import { env, configuredPaymentGateway } from "@/lib/env";
+import { cashfreeBaseUrl, configuredPaymentGateway, env } from "@/lib/env";
 
 export function getPaymentMode() {
   return configuredPaymentGateway();
@@ -11,8 +11,14 @@ export async function createPaymentOrder(input: {
   currency?: string;
   receipt: string;
   notes?: Record<string, string>;
+  customer?: { name?: string; email?: string; phone?: string };
+  gateway?: "razorpay" | "cashfree" | "manual";
 }) {
-  const gateway = configuredPaymentGateway();
+  const gateway = input.gateway && input.gateway !== "manual" ? input.gateway : configuredPaymentGateway();
+
+  if (!Number.isFinite(input.amount) || input.amount <= 0) {
+    throw new Error("Payment amount must be greater than zero.");
+  }
 
   if (gateway === "razorpay") {
     const razorpay = new Razorpay({
@@ -27,11 +33,11 @@ export async function createPaymentOrder(input: {
       notes: input.notes
     });
 
-    return { gateway, order };
+    return { gateway, order, publicKey: env.razorpayKeyId };
   }
 
   if (gateway === "cashfree") {
-    const response = await fetch("https://sandbox.cashfree.com/pg/orders", {
+    const response = await fetch(`${cashfreeBaseUrl()}/orders`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -43,11 +49,18 @@ export async function createPaymentOrder(input: {
         order_amount: input.amount,
         order_currency: input.currency || "INR",
         order_id: input.receipt,
-        order_note: input.notes?.description || "ContractorOps payment"
+        order_note: input.notes?.description || "ContractorOps payment",
+        customer_details: {
+          customer_id: input.notes?.customerId || input.customer?.email || input.customer?.phone || input.receipt,
+          customer_name: input.customer?.name || "ContractorOps customer",
+          customer_email: input.customer?.email || "customer@example.com",
+          customer_phone: input.customer?.phone || "9999999999"
+        }
       })
     });
 
     const order = await response.json();
+    if (!response.ok) throw new Error(order?.message || "Cashfree order creation failed.");
     return { gateway, order };
   }
 
@@ -70,12 +83,13 @@ export function verifyRazorpaySignature(input: {
     .createHmac("sha256", env.razorpayKeySecret)
     .update(`${input.orderId}|${input.paymentId}`)
     .digest("hex");
+  if (expected.length !== input.signature.length) return false;
   return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(input.signature));
 }
 
 export async function verifyCashfreePayment(orderId: string) {
   if (!env.cashfreeAppId || !env.cashfreeSecretKey) return { configured: false };
-  const response = await fetch(`https://sandbox.cashfree.com/pg/orders/${orderId}`, {
+  const response = await fetch(`${cashfreeBaseUrl()}/orders/${orderId}`, {
     headers: {
       "x-client-id": env.cashfreeAppId,
       "x-client-secret": env.cashfreeSecretKey,

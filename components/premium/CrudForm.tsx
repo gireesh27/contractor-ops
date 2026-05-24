@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Loader2, Save } from "lucide-react";
+import { DragDropImageUpload } from "@/components/uploads/DragDropImageUpload";
 
 export interface CrudField {
   name: string;
@@ -83,6 +84,15 @@ export function CrudForm({
         {fields.map((field) => {
           const inputClass =
             "h-12 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-medium outline-none transition focus:border-blueprint focus:ring-4 focus:ring-blue-500/10";
+
+          if (["url", "image", "proof", "receipt"].includes(field.name)) {
+            return (
+              <label key={field.name} className="grid gap-1.5 text-sm font-bold text-slate-700 md:col-span-2">
+                {field.label}
+                <UploadField folder={collection} name={field.name} />
+              </label>
+            );
+          }
 
           if (field.type === "textarea") {
             return (
@@ -188,5 +198,15 @@ export function CrudForm({
         {loading ? "Saving..." : "Save record"}
       </button>
     </form>
+  );
+}
+
+function UploadField({ folder, name }: { folder: string; name: string }) {
+  const [url, setUrl] = useState("");
+  return (
+    <>
+      <DragDropImageUpload folder={folder} onUploaded={(file) => setUrl(file.url)} />
+      <input name={name} type="hidden" value={url} />
+    </>
   );
 }

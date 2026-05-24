@@ -281,10 +281,15 @@ export async function getDashboardSummary(organizationId: string) {
 
 async function getDashboardCharts(organizationId: string) {
   const org = objectId(organizationId);
-  const [billing, labour, materials, progress, expenses] = await Promise.all([
+  const [billing, received, labour, materials, progress, expenses] = await Promise.all([
     Bill.aggregate([
       { $match: { organizationId: org, deletedAt: null } },
-      { $group: { _id: { $dateToString: { format: "%b", date: "$billDate" } }, billed: { $sum: "$netPayable" } } },
+      { $group: { _id: { $dateToString: { format: "%Y-%m", date: "$billDate" } }, billed: { $sum: "$netPayable" } } },
+      { $sort: { _id: 1 } }
+    ]),
+    Payment.aggregate([
+      { $match: { organizationId: org, deletedAt: null, status: { $in: ["Paid", "Verified", "Captured"] } } },
+      { $group: { _id: { $dateToString: { format: "%Y-%m", date: { $ifNull: ["$paidAt", "$createdAt"] } } }, received: { $sum: "$amount" } } },
       { $sort: { _id: 1 } }
     ]),
     LabourAttendance.aggregate([
@@ -307,8 +312,18 @@ async function getDashboardCharts(organizationId: string) {
     ])
   ]);
 
+  const receivedByMonth = new Map(received.map((row) => [row._id, row.received]));
+  const months = Array.from(new Set([...billing.map((row) => row._id), ...received.map((row) => row._id)])).sort();
+
   return toPlain({
-    billing: billing.map((row) => ({ label: row._id || "Unscheduled", billed: row.billed, received: 0 })),
+    billing: months.map((month) => {
+      const billed = billing.find((row) => row._id === month)?.billed || 0;
+      return {
+        label: month ? new Date(`${month}-01T00:00:00.000Z`).toLocaleDateString("en-IN", { month: "short", year: "2-digit" }) : "Unscheduled",
+        billed,
+        received: receivedByMonth.get(month) || 0
+      };
+    }),
     labour: labour.map((row) => ({ label: row._id, value: row.value })),
     materials: materials.map((row) => ({ label: row._id || "Material", value: row.value })),
     progress: progress.map((row: any) => ({ label: row.name, value: row.progress || 0, status: row.status })),

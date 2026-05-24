@@ -84,7 +84,7 @@ const OrganizationMemberSchema = new Schema(
     userId: { type: ObjectId, ref: "User", required: true, index: true },
     role: {
       type: String,
-      enum: ["Owner", "Admin", "Project Manager", "Site Engineer", "Accountant", "Viewer"],
+      enum: ["Super Admin", "Owner", "Admin", "Organization Owner", "Organization Admin", "Project Manager", "Site Engineer", "Accountant", "Viewer", "Member"],
       default: "Viewer"
     },
     invitedBy: { type: ObjectId, ref: "User" },

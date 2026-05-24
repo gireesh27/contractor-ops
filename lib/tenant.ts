@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { connectToDatabase } from "@/lib/db/connect";
 import { Organization, OrganizationMember, User } from "@/lib/db/models";
+import { isSuperAdminEmail } from "@/lib/env";
+import { normalizeRole } from "@/lib/permissions";
 
 export interface TenantContext {
   userId: string;
@@ -11,6 +13,7 @@ export interface TenantContext {
   userEmail?: string | null;
   organizationName: string;
   databaseReady: boolean;
+  isSuperAdmin: boolean;
 }
 
 export async function getTenantContext(options: { required?: boolean } = {}): Promise<TenantContext | null> {
@@ -29,7 +32,8 @@ export async function getTenantContext(options: { required?: boolean } = {}): Pr
       userName: session.user.name,
       userEmail: session.user.email,
       organizationName: "Database not connected",
-      databaseReady: false
+      databaseReady: false,
+      isSuperAdmin: Boolean(session.user.isSuperAdmin || isSuperAdminEmail(session.user.email))
     };
   }
 
@@ -47,13 +51,16 @@ export async function getTenantContext(options: { required?: boolean } = {}): Pr
     return null;
   }
 
+  const superAdmin = Boolean(session.user.isSuperAdmin || isSuperAdminEmail(user?.email || session.user.email));
+
   return {
     userId: String(session.user.id),
     organizationId: String(session.user.organizationId),
-    role: String(membership.role || session.user.role),
+    role: superAdmin ? "Super Admin" : normalizeRole(String(membership.role || session.user.role)),
     userName: user?.name || session.user.name,
     userEmail: user?.email || session.user.email,
     organizationName: String(organization.name || "ContractorOps"),
-    databaseReady: true
+    databaseReady: true,
+    isSuperAdmin: superAdmin
   };
 }

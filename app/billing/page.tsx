@@ -1,5 +1,5 @@
-import { CreditCard, Landmark, ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { PaymentActionButtons } from "@/components/payments/PaymentActionButtons";
 import { SectionHeader } from "@/components/SectionHeader";
 import { MotionPage } from "@/components/premium/MotionPage";
 import { planCatalog } from "@/lib/data-access";
@@ -25,11 +25,7 @@ export default function BillingPage() {
               <ul className="mt-5 space-y-2 text-sm font-semibold">
                 {plan.features.map((feature) => <li key={feature}>- {feature}</li>)}
               </ul>
-              <div className="mt-6 grid gap-2">
-                <button className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-slate-950 text-sm font-black text-white" type="button"><CreditCard className="h-4 w-4" /> Razorpay</button>
-                <button className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-current/20 text-sm font-black" type="button"><ShieldCheck className="h-4 w-4" /> Cashfree</button>
-                <button className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-current/20 text-sm font-black" type="button"><Landmark className="h-4 w-4" /> Bank transfer</button>
-              </div>
+              <PaymentActionButtons amount={Math.max(plan.price, 1)} label={`${plan.name} plan`} planName={plan.name} />
             </article>
           ))}
         </div>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cacheDel } from "@/lib/cache";
 import { collectionModels, type CollectionName } from "@/lib/db/models";
 import { createRecord, listRecords } from "@/lib/data-access";
+import { can, collectionPermission } from "@/lib/permissions";
 import { getTenantContext } from "@/lib/tenant";
 
 interface Params {
@@ -17,6 +18,9 @@ export async function GET(request: NextRequest, { params }: Params) {
   if (!isCollection(collection)) return NextResponse.json({ error: "Unknown collection" }, { status: 404 });
   const tenant = await getTenantContext({ required: true });
   if (!tenant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!can(tenant.role as any, collectionPermission(collection, "GET"))) {
+    return NextResponse.json({ error: "Access denied" }, { status: 403 });
+  }
 
   const records = await listRecords(collection, tenant.organizationId, {
     projectId: request.nextUrl.searchParams.get("projectId") || undefined,
@@ -31,6 +35,9 @@ export async function POST(request: NextRequest, { params }: Params) {
   if (!isCollection(collection)) return NextResponse.json({ error: "Unknown collection" }, { status: 404 });
   const tenant = await getTenantContext({ required: true });
   if (!tenant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!can(tenant.role as any, collectionPermission(collection, "POST"))) {
+    return NextResponse.json({ error: "Access denied" }, { status: 403 });
+  }
 
   const contentType = request.headers.get("content-type") || "";
   const payload =

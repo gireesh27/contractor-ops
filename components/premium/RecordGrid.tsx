@@ -5,9 +5,18 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 function printable(value: unknown) {
   if (value === null || value === undefined || value === "") return "-";
   if (typeof value === "number") return value > 999 ? formatCurrency(value) : value.toLocaleString("en-IN");
+  if (typeof value === "string" && /^[a-f\d]{24}$/i.test(value)) return "Linked record";
   if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value)) return formatDate(value);
   if (typeof value === "object") return "Attached";
   return String(value);
+}
+
+function labelize(key: string) {
+  return key.replace(/Id$/, "").replace(/([A-Z])/g, " $1").replace(/^./, (letter) => letter.toUpperCase());
+}
+
+function userFacingField(key: string) {
+  return !["_id", "id", "__v", "organizationId", "createdBy", "updatedBy", "deletedAt"].includes(key) && !key.endsWith("Id");
 }
 
 export function RecordGrid({
@@ -36,7 +45,7 @@ export function RecordGrid({
   return (
     <div className="grid gap-4 xl:grid-cols-2">
       {records.map((record) => {
-        const title = record[primary] || record.title || record.taskName || record.billNumber || record.description || record._id;
+        const title = record[primary] || record.title || record.taskName || record.billNumber || record.description || record.metadata?.title || "Record";
         const subtitle = record[secondary] || record.category || record.workCategory || record.type || record.status;
         const amountValue = record[amount] || record.netPayable || record.contractValue || record.totalCost || record.wageCalculated;
         return (
@@ -50,11 +59,11 @@ export function RecordGrid({
             </div>
             <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
               {Object.entries(record)
-                .filter(([key]) => !["_id", "__v", "organizationId", "createdBy", "updatedBy", "deletedAt"].includes(key))
+                .filter(([key]) => userFacingField(key))
                 .slice(0, 6)
                 .map(([key, value]) => (
                   <div key={key} className="rounded-2xl bg-slate-50 p-3">
-                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">{key}</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">{labelize(key)}</p>
                     <p className="mt-1 truncate font-bold text-slate-700">{printable(value)}</p>
                   </div>
                 ))}

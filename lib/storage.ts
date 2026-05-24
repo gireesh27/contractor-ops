@@ -9,8 +9,10 @@ function cloudinaryReady() {
 
 export async function uploadFile(file: File, folder: string) {
   const bytes = Buffer.from(await file.arrayBuffer());
-  const maxSize = 12 * 1024 * 1024;
-  if (bytes.length > maxSize) throw new Error("File exceeds 12MB limit.");
+  const imageTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+  if (file.type.startsWith("image/") && !imageTypes.includes(file.type)) throw new Error("Unsupported image format. Use JPG, PNG, or WEBP.");
+  const maxSize = file.type.startsWith("image/") ? 5 * 1024 * 1024 : 12 * 1024 * 1024;
+  if (bytes.length > maxSize) throw new Error(file.type.startsWith("image/") ? "Image exceeds 5MB limit." : "File exceeds 12MB limit.");
 
   if (cloudinaryReady()) {
     cloudinary.config({

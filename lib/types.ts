@@ -1,6 +1,16 @@
 export type ID = string;
 
-export type Role = "Owner" | "Admin" | "Project Manager" | "Site Engineer" | "Accountant" | "Viewer";
+export type Role =
+  | "Super Admin"
+  | "Owner"
+  | "Admin"
+  | "Organization Owner"
+  | "Organization Admin"
+  | "Project Manager"
+  | "Site Engineer"
+  | "Accountant"
+  | "Viewer"
+  | "Member";
 
 export type BusinessType =
   | "Civil contractor"
