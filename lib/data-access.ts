@@ -332,8 +332,8 @@ async function getDashboardCharts(organizationId: string) {
 }
 
 function buildAiInsight(input: { outstanding: number; labourCostThisMonth: number; materialCostThisMonth: number; delayedProjects: number; overdueBills: number }) {
-  if (!process.env.OPENAI_API_KEY && !process.env.GEMINI_API_KEY) {
-    return "AI API key not configured. Add OPENAI_API_KEY or GEMINI_API_KEY to enable AI-generated reports.";
+  if (!process.env.OPENROUTER_API_KEY && !process.env.GEMINI_API_KEY) {
+    return "AI API key not configured. Add OPENROUTER_API_KEY or GEMINI_API_KEY to enable AI-generated reports.";
   }
 
   const risks = [];

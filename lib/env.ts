@@ -13,7 +13,7 @@ export const env = {
   cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME,
   cloudinaryApiKey: process.env.CLOUDINARY_API_KEY,
   cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET,
-  openAiApiKey: process.env.OPENAI_API_KEY,
+  openRouterApiKey: process.env.OPENROUTER_API_KEY,
   geminiApiKey: process.env.GEMINI_API_KEY,
   appUrl: process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || "http://localhost:3000",
   superAdminEmails: (process.env.SUPER_ADMIN_EMAILS || "")
@@ -27,7 +27,7 @@ export function hasMongo() {
 }
 
 export function hasAiProvider() {
-  return Boolean(env.openAiApiKey || env.geminiApiKey);
+  return Boolean(env.openRouterApiKey || env.geminiApiKey);
 }
 
 export function configuredPaymentGateway() {

@@ -30,19 +30,19 @@ export async function generateAiReport(input: AiReportInput, mode = "Daily progr
     return {
       configured: false,
       title: "AI API key not configured",
-      summary: "AI API key not configured. Add OPENAI_API_KEY or GEMINI_API_KEY to enable AI-generated reports.",
+      summary: "AI API key not configured. Add OPENROUTER_API_KEY or GEMINI_API_KEY to enable AI-generated reports.",
       keyPoints: ["Connect an AI provider", "Use project, BOQ, labour, material, billing, and payment data", "Generate professional client-ready reports"],
-      suggestedMessage: "Add OPENAI_API_KEY or GEMINI_API_KEY to enable AI-generated reports.",
+      suggestedMessage: "Add OPENROUTER_API_KEY or GEMINI_API_KEY to enable AI-generated reports.",
       professionalReport: "AI report generation is disabled until an AI provider is configured.",
       whatsappVersion: "AI is not configured yet.",
       emailVersion: "AI report generation is disabled until an AI provider is configured."
     };
   }
 
-  const selectedProvider = provider === "auto" ? (env.openAiApiKey ? "openai" : "gemini") : provider;
+  const selectedProvider = provider === "auto" ? (env.openRouterApiKey ? "openai" : "gemini") : provider;
   try {
     const prompt = buildAiPrompt(input, mode);
-    const generated = selectedProvider === "openai" ? await callOpenAi(prompt) : await callGemini(prompt);
+    const generated = selectedProvider === "openai" ? await callOpenRouter(prompt) : await callGemini(prompt);
     return normalizeAiResult(generated, mode);
   } catch (error) {
     return {
@@ -93,26 +93,50 @@ Input:
 ${JSON.stringify(input, null, 2)}`;
 }
 
-async function callOpenAi(prompt: string) {
-  if (!env.openAiApiKey) throw new Error("OPENAI_API_KEY is not configured.");
+async function callOpenRouter(prompt: string) {
+  if (!env.openRouterApiKey) {
+    throw new Error("OPENROUTER_API_KEY is not configured.");
+  }
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 30_000);
-  const response = await fetch("https://api.openai.com/v1/responses", {
+
+  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${env.openAiApiKey}`,
-      "Content-Type": "application/json"
+      Authorization: `Bearer ${env.openRouterApiKey}`,
+      "Content-Type": "application/json",
+
+      // Optional, but recommended by OpenRouter
+      "HTTP-Referer": process.env.APP_URL || "http://localhost:3000",
+      "X-OpenRouter-Title": process.env.APP_NAME || "My App"
     },
     body: JSON.stringify({
-      model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
-      input: prompt,
-      text: { format: { type: "json_object" } }
+      model: process.env.OPENROUTER_MODEL || "openai/gpt-oss-120b:free",
+      messages: [
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      response_format: {
+        type: "json_object"
+      }
     }),
     signal: controller.signal
   }).finally(() => clearTimeout(timeout));
+
   const payload = await response.json();
-  if (!response.ok) throw new Error(payload?.error?.message || "OpenAI request failed.");
-  return payload.output_text || payload.output?.flatMap((item: any) => item.content || []).find((part: any) => part.type === "output_text")?.text || "";
+
+  if (!response.ok) {
+    throw new Error(
+      payload?.error?.message ||
+      payload?.choices?.[0]?.error?.message ||
+      "OpenRouter request failed."
+    );
+  }
+
+  return payload?.choices?.[0]?.message?.content || "";
 }
 
 async function callGemini(prompt: string) {
