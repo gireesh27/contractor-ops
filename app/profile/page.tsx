@@ -7,8 +7,25 @@ import { Organization, User } from "@/lib/db/models";
 import { objectId } from "@/lib/data-access";
 import { getTenantContext } from "@/lib/tenant";
 
+function safeString(value: unknown) {
+  if (value === null || value === undefined) return "";
+  return String(value);
+}
+
+function safeDate(value: unknown) {
+  if (!value) return "";
+  const date = new Date(String(value));
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric"
+  });
+}
+
 export default async function ProfilePage() {
   const tenant = await getTenantContext({ required: true });
+
   const [user, organization] = tenant?.databaseReady
     ? await Promise.all([
         User.findOne({ _id: objectId(tenant.userId), deletedAt: null }).lean(),
@@ -16,27 +33,37 @@ export default async function ProfilePage() {
       ])
     : [null, null];
 
+  const userRecord = user as Record<string, unknown> | null;
+  const organizationRecord = organization as Record<string, unknown> | null;
+
   return (
     <AppShell>
       <MotionPage>
-        <SectionHeader eyebrow="Profile" title="Account, organization, and preferences">
-          <div className="rounded-2xl bg-blueprint p-3 text-white">
+        <SectionHeader eyebrow="Settings" title="Profile, account, security, and preferences">
+          <div className="rounded-2xl bg-blueprint p-3 text-white shadow-glow">
             <UserCircle className="h-5 w-5" aria-hidden="true" />
           </div>
         </SectionHeader>
+
         <ProfileSettingsForm
-          organization={{
-            name: String(organization?.name || tenant?.organizationName || ""),
-            gstNumber: String(organization?.gstNumber || ""),
-            city: String(organization?.city || ""),
-            state: String(organization?.state || "")
-          }}
           role={tenant?.role || "Viewer"}
           user={{
-            name: String(user?.name || tenant?.userName || ""),
-            email: String(user?.email || tenant?.userEmail || ""),
-            phone: String(user?.phone || ""),
-            image: String(user?.image || "")
+            name: safeString(userRecord?.name || tenant?.userName),
+            email: safeString(userRecord?.email || tenant?.userEmail),
+            phone: safeString(userRecord?.phone),
+            image: safeString(userRecord?.image),
+            designation: safeString(userRecord?.designation),
+            location: safeString(userRecord?.location),
+            bio: safeString(userRecord?.bio),
+            emailVerified: Boolean(userRecord?.emailVerified),
+            createdAt: safeDate(userRecord?.createdAt),
+            updatedAt: safeDate(userRecord?.updatedAt)
+          }}
+          organization={{
+            name: safeString(organizationRecord?.name || tenant?.organizationName),
+            gstNumber: safeString(organizationRecord?.gstNumber),
+            city: safeString(organizationRecord?.city),
+            state: safeString(organizationRecord?.state)
           }}
         />
       </MotionPage>
