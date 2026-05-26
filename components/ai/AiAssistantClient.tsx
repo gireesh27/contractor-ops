@@ -60,13 +60,17 @@ export function AiAssistantClient({
     };
 
     try {
-      const response = await fetch("/api/ai/assistant", {
+      const response = await fetch("/api/ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)
       });
 
-      const payload = await response.json();
+      const contentType = response.headers.get("content-type") || "";
+      const payload = contentType.includes("application/json")
+        ? await response.json()
+        : { error: await response.text() };
+
       if (!response.ok) throw new Error(payload.error || "AI assistant failed.");
 
       setResult(payload.data);
