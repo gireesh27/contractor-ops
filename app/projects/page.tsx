@@ -24,7 +24,6 @@ export default async function ProjectsPage() {
           </Link>
         </SectionHeader>
         {!tenant?.databaseReady ? <DatabaseEmptyState title="MongoDB connection required" /> : null}
-        <CrudForm collection="projects" fields={projectFields} />
         <RecordGrid amount="contractValue" emptyTitle="No projects saved yet" primary="name" records={projects} secondary="status" />
       </MotionPage>
     </AppShell>
