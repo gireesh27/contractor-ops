@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { Bot, Copy, Download, Loader2, RefreshCcw, Search, Sparkles } from "lucide-react";
+import { DonutChart, SimpleBarChart } from "@/components/charts/BusinessCharts";
+import { formatCurrency } from "@/lib/utils";
 
 type AiResult = {
   title: string;
@@ -11,6 +13,12 @@ type AiResult = {
   professionalReport: string;
   whatsappVersion: string;
   emailVersion: string;
+  kpis?: Array<{ label: string; value: string | number }>;
+  charts?: Array<{ type: "pie" | "bar" | "line" | "area"; title: string; data: Array<{ label: string; value: number }> }>;
+  risks?: string[];
+  suggestedActions?: string[];
+  databaseRisks?: string[];
+  databaseRecommendations?: string[];
 };
 
 type ProjectOption = {
@@ -150,6 +158,35 @@ export function AiAssistantClient({
           <h2 className="mt-5 text-3xl font-black">Database insight</h2>
           <p className="mt-3 leading-7 text-white/72">{result.summary}</p>
         </article>
+
+        {result.kpis?.length ? (
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {result.kpis.map((kpi) => (
+              <div key={kpi.label} className="rounded-[1.5rem] border border-white/80 bg-white/86 p-4 shadow-glass backdrop-blur-xl">
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">{kpi.label}</p>
+                <p className="mt-2 text-2xl font-black text-slate-950 dark:text-white">{typeof kpi.value === "number" ? formatCurrency(kpi.value) : kpi.value}</p>
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        {result.charts?.length ? (
+          <div className="grid gap-4 xl:grid-cols-2">
+            {result.charts.map((chart) => (
+              <article key={chart.title} className="rounded-[1.75rem] border border-white/80 bg-white/86 p-5 shadow-glass backdrop-blur-xl">
+                <h3 className="text-lg font-black">{chart.title}</h3>
+                {chart.type === "pie" ? <DonutChart data={chart.data || []} /> : <SimpleBarChart data={chart.data || []} />}
+              </article>
+            ))}
+          </div>
+        ) : null}
+
+        {(result.databaseRisks?.length || result.databaseRecommendations?.length) ? (
+          <div className="grid gap-4 lg:grid-cols-2">
+            <AiCard title="Database risks" body={(result.databaseRisks || []).join("\n") || "No database risks found."} />
+            <AiCard title="Database recommendations" body={(result.databaseRecommendations || []).join("\n") || "No database recommendations found."} />
+          </div>
+        ) : null}
 
         <div className="grid gap-4 lg:grid-cols-2">
           <AiCard title="Key points" body={result.keyPoints.join("\n")} />

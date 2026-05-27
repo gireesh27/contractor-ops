@@ -1,4 +1,5 @@
 import { FileText } from "lucide-react";
+import Link from "next/link";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -24,13 +25,15 @@ export function RecordGrid({
   primary = "name",
   secondary = "status",
   amount = "amount",
-  emptyTitle = "No records saved yet"
+  emptyTitle = "No records saved yet",
+  hrefForRecord
 }: {
   records: Array<Record<string, any>>;
   primary?: string;
   secondary?: string;
   amount?: string;
   emptyTitle?: string;
+  hrefForRecord?: (record: Record<string, any>) => string | undefined;
 }) {
   if (!records.length) {
     return (
@@ -48,8 +51,9 @@ export function RecordGrid({
         const title = record[primary] || record.title || record.taskName || record.billNumber || record.description || record.metadata?.title || "Record";
         const subtitle = record[secondary] || record.category || record.workCategory || record.type || record.status;
         const amountValue = record[amount] || record.netPayable || record.contractValue || record.totalCost || record.wageCalculated;
-        return (
-          <article key={record._id || record.id} className="rounded-[1.75rem] border border-white/80 bg-white/86 p-5 shadow-glass backdrop-blur-xl transition hover:-translate-y-1 hover:shadow-glow">
+        const href = hrefForRecord?.(record);
+        const content = (
+          <article className="rounded-[1.75rem] border border-white/80 bg-white/86 p-5 shadow-glass backdrop-blur-xl transition hover:-translate-y-1 hover:shadow-glow">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h3 className="text-lg font-black text-slate-950">{printable(title)}</h3>
@@ -70,6 +74,13 @@ export function RecordGrid({
             </div>
             {amountValue ? <p className="mt-4 text-2xl font-black text-blueprint">{printable(amountValue)}</p> : null}
           </article>
+        );
+        return href ? (
+          <Link key={record._id || record.id} href={href} className="block focus:outline-none focus:ring-4 focus:ring-blue-500/20 rounded-[1.75rem]">
+            {content}
+          </Link>
+        ) : (
+          <div key={record._id || record.id}>{content}</div>
         );
       })}
     </div>

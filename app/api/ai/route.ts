@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db/connect";
 import { rateLimit } from "@/lib/cache";
 import { generateProjectAiAnswer } from "@/lib/ai";
-import { AIRequestLog } from "@/lib/db/models";
-import { objectId } from "@/lib/data-access";
+import { AIRequestLog, Project } from "@/lib/db/models";
+import { getProjectBundle, objectId } from "@/lib/data-access";
 import { getTenantContext } from "@/lib/tenant";
 
 function escapeRegex(value: string) {
@@ -123,9 +123,8 @@ export async function POST(request: NextRequest) {
     }
 
     const mongooseConnection = await connectToDatabase();
-    const db = mongooseConnection?.connection?.db;
 
-    if (!db) {
+    if (!mongooseConnection) {
       return NextResponse.json(
         { error: "Database connection is not ready." },
         { status: 500 }
@@ -137,35 +136,6 @@ export async function POST(request: NextRequest) {
     const organizationMatch = {
       $in: [organizationObjectId, tenant.organizationId],
     };
-
-    const collections = await db
-      .listCollections({}, { nameOnly: true })
-      .toArray();
-
-    const existingCollections = new Set(
-      collections.map((collection: any) => collection.name)
-    );
-
-    async function readCollection(
-      collectionName: string,
-      query: any,
-      limit = 100
-    ) {
-      if (!existingCollections.has(collectionName)) return [];
-
-      return db
-        .collection(collectionName)
-        .find(query)
-        .sort({ createdAt: -1, updatedAt: -1, _id: -1 })
-        .limit(limit)
-        .toArray();
-    }
-
-    async function readOne(collectionName: string, query: any) {
-      if (!existingCollections.has(collectionName)) return null;
-
-      return db.collection(collectionName).findOne(query);
-    }
 
     const projectQuery = projectId
       ? {
@@ -181,7 +151,7 @@ export async function POST(request: NextRequest) {
         ],
       };
 
-    const project = await readOne("projects", projectQuery);
+    const project = await Project.findOne(projectQuery).lean();
 
     if (!project) {
       return NextResponse.json(
@@ -191,101 +161,34 @@ export async function POST(request: NextRequest) {
     }
 
     const projectObjectId = project._id;
-    const projectIdValues = [
-      projectObjectId,
-      String(projectObjectId),
-      projectId,
-      project?.id,
-    ].filter(Boolean);
+    const bundle = await getProjectBundle(tenant.organizationId, String(projectObjectId));
 
-    const projectDataQuery = {
-      organizationId: organizationMatch,
-      $or: [
-        { projectId: { $in: projectIdValues } },
-        { project: { $in: projectIdValues } },
-        { project_id: { $in: projectIdValues } },
-      ],
-    };
-
-    const [
-      boq,
-      estimates,
-      dailyProgress,
-      labour,
-      materials,
-      equipment,
-      measurements,
-      bills,
-      payments,
-      vendors,
-      expenses,
-      sitePhotos,
-      documents,
-      reports,
-      tasks,
-      schedule,
-    ] = await Promise.all([
-      readCollection("boqs", projectDataQuery, 300),
-      readCollection("estimates", projectDataQuery, 200),
-      readCollection("dailyprogresses", projectDataQuery, 200),
-      readCollection("labours", projectDataQuery, 200),
-      readCollection("materials", projectDataQuery, 200),
-      readCollection("equipment", projectDataQuery, 200),
-      readCollection("measurements", projectDataQuery, 300),
-      readCollection("bills", projectDataQuery, 200),
-      readCollection("payments", projectDataQuery, 200),
-      readCollection("vendors", projectDataQuery, 200),
-      readCollection("expenses", projectDataQuery, 200),
-      readCollection("sitephotos", projectDataQuery, 100),
-      readCollection("documents", projectDataQuery, 100),
-      readCollection("reports", projectDataQuery, 100),
-      readCollection("tasks", projectDataQuery, 200),
-      readCollection("schedules", projectDataQuery, 100),
-    ]);
-
-    const billedAmount = sumAmount(bills);
-    const receivedAmount = sumAmount(payments);
-    const materialTotal = sumAmount(materials);
-    const labourTotal = sumAmount(labour);
-    const equipmentTotal = sumAmount(equipment);
-    const expensesTotal = sumAmount(expenses);
+    if (!bundle) {
+      return NextResponse.json(
+        { error: "Project data could not be loaded." },
+        { status: 404 }
+      );
+    }
 
     const dashboard = {
-      projectName:
-        project.name ||
-        project.projectName ||
-        project.title ||
-        projectName ||
-        "Selected project",
-
-      contractValue:
-        numberValue(project.contractValue) ||
-        numberValue(project.value) ||
-        numberValue(project.amount),
-
-      boqValue: sumAmount(boq),
-      billedAmount,
-      receivedAmount,
-      outstanding: billedAmount - receivedAmount,
-
-      materialThisMonth: sumAmount(materials.filter(isCurrentMonth)),
-      labourThisMonth: sumAmount(labour.filter(isCurrentMonth)),
-      expenseThisMonth: sumAmount(expenses.filter(isCurrentMonth)),
-
-      totalMaterialCost: materialTotal,
-      totalLabourCost: labourTotal,
-      totalEquipmentCost: equipmentTotal,
-      totalExpenses: expensesTotal,
-
-      estimatedProfitLoss:
-        billedAmount - materialTotal - labourTotal - equipmentTotal - expensesTotal,
-
-      totalBoqItems: boq.length,
-      totalBills: bills.length,
-      totalPayments: payments.length,
-      totalMeasurements: measurements.length,
-      totalDailyProgressEntries: dailyProgress.length,
-      totalTasks: tasks.length,
+      projectName: bundle.project.name || projectName || "Selected project",
+      contractValue: numberValue(bundle.project.contractValue),
+      boqValue: bundle.analytics.metrics.boqValue,
+      billedAmount: bundle.analytics.metrics.billed,
+      receivedAmount: bundle.analytics.metrics.received,
+      outstanding: bundle.analytics.metrics.outstanding,
+      totalMaterialCost: bundle.analytics.metrics.materialCost,
+      totalLabourCost: bundle.analytics.metrics.labourCost,
+      totalExpenses: bundle.analytics.metrics.expenseCost,
+      vendorPayable: bundle.analytics.metrics.vendorPayable,
+      estimatedProfitLoss: bundle.analytics.metrics.profitLoss,
+      progress: bundle.analytics.metrics.progress,
+      totalBoqItems: bundle.boqItems.length,
+      totalBills: bundle.bills.length,
+      totalPayments: bundle.payments.length,
+      totalMeasurements: bundle.measurements.length,
+      totalDailyProgressEntries: bundle.progress.length,
+      totalTasks: bundle.tasks.length,
     };
 
     const aiInput = {
@@ -294,23 +197,26 @@ export async function POST(request: NextRequest) {
       question,
       dashboard,
       data: cleanForAi({
-        project,
-        boq,
-        estimates,
-        dailyProgress,
-        labour,
-        materials,
-        equipment,
-        measurements,
-        bills,
-        payments,
-        vendors,
-        expenses,
-        sitePhotos,
-        documents,
-        reports,
-        tasks,
-        schedule,
+        project: bundle.project,
+        boq: bundle.boqItems,
+        estimates: bundle.boqItems,
+        dailyProgress: bundle.progress,
+        labour: bundle.labour,
+        workers: bundle.workers,
+        materials: bundle.materialTransactions,
+        equipment: bundle.equipment,
+        measurements: bundle.measurements,
+        bills: bundle.bills,
+        payments: bundle.payments,
+        vendors: bundle.vendors,
+        vendorTransactions: bundle.vendorTransactions,
+        expenses: bundle.expenses,
+        sitePhotos: bundle.photos,
+        documents: bundle.documents,
+        reports: bundle.reports,
+        tasks: bundle.tasks,
+        schedule: bundle.schedule,
+        analytics: bundle.analytics
       }),
     };
 
@@ -332,11 +238,31 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({
-      data: result,
+      data: {
+        ...result,
+        kpis: [
+          { label: "Total Budget", value: dashboard.boqValue || dashboard.contractValue },
+          { label: "Actual Cost", value: bundle.analytics.metrics.actualCost },
+          { label: "Progress", value: `${dashboard.progress || 0}%` },
+          { label: "Outstanding", value: dashboard.outstanding }
+        ],
+        charts: [
+          { type: "bar", title: "Budget vs Actual", data: bundle.analytics.charts.budgetVsActual },
+          { type: "pie", title: "Cost Breakdown", data: bundle.analytics.charts.costBreakdown },
+          { type: "bar", title: "Material Usage", data: bundle.analytics.charts.materialUsage },
+          { type: "bar", title: "Worker Attendance", data: bundle.analytics.charts.attendance },
+          { type: "bar", title: "Task Completion", data: bundle.analytics.charts.taskStatus }
+        ],
+        databaseRisks: bundle.analytics.risks,
+        databaseRecommendations: [
+          bundle.analytics.metrics.outstanding > 0 ? "Follow up pending client payments." : "",
+          bundle.analytics.metrics.actualCost > bundle.analytics.metrics.estimatedBudget ? "Review material, labour, expense, and vendor costs against budget." : "",
+          bundle.analytics.metrics.pendingMeasurementCount > 0 ? "Verify pending measurements before billing." : "",
+          bundle.analytics.metrics.materialShortageCount > 0 ? "Raise purchase requests for low-stock materials." : ""
+        ].filter(Boolean)
+      },
     });
   } catch (error) {
-    console.error("AI assistant route failed", error);
-
     return NextResponse.json(
       {
         error:

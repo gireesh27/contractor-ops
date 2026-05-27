@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { SectionHeader } from "@/components/SectionHeader";
-import { CrudForm } from "@/components/premium/CrudForm";
 import { DatabaseEmptyState } from "@/components/premium/DatabaseEmptyState";
 import { MotionPage } from "@/components/premium/MotionPage";
 import { RecordGrid } from "@/components/premium/RecordGrid";
@@ -24,7 +23,14 @@ export default async function ProjectsPage() {
           </Link>
         </SectionHeader>
         {!tenant?.databaseReady ? <DatabaseEmptyState title="MongoDB connection required" /> : null}
-        <RecordGrid amount="contractValue" emptyTitle="No projects saved yet" primary="name" records={projects} secondary="status" />
+        <RecordGrid
+          amount="contractValue"
+          emptyTitle="No projects saved yet"
+          hrefForRecord={(project) => `/projects/${project._id || project.id}`}
+          primary="name"
+          records={projects}
+          secondary="status"
+        />
       </MotionPage>
     </AppShell>
   );

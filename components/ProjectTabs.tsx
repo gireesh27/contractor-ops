@@ -2,21 +2,23 @@ import Link from "next/link";
 
 const tabs = [
   { href: "", label: "Overview" },
-  { href: "/boq", label: "BOQ" },
-  { href: "/schedule", label: "Schedule" },
-  { href: "/tasks", label: "Tasks" },
-  { href: "/daily-progress", label: "Daily Progress" },
-  { href: "/labour", label: "Labour" },
+  { href: "/tasks", label: "Tasks / Activities" },
+  { href: "/labour", label: "Workers / Attendance" },
   { href: "/materials", label: "Materials" },
-  { href: "/equipment", label: "Equipment" },
   { href: "/measurements", label: "Measurements" },
-  { href: "/photos", label: "Photos" },
+  { href: "/boq", label: "BOQ" },
+  { href: "/boq", label: "Estimates" },
+  { href: "/daily-progress", label: "Daily Progress" },
   { href: "/bills", label: "Bills" },
+  { href: "/expenses", label: "Vendor Bills" },
+  { href: "/reports", label: "Records" },
+  { href: "/calendar", label: "Calendar" },
+  { href: "/ai-summary", label: "AI Insights" },
+  { href: "/photos", label: "Photos" },
   { href: "/payments", label: "Payments" },
-  { href: "/expenses", label: "Expenses" },
+  { href: "/equipment", label: "Equipment" },
   { href: "/documents", label: "Documents" },
-  { href: "/reports", label: "Reports" },
-  { href: "/ai-summary", label: "AI Summary" }
+  { href: "/schedule", label: "Schedule" }
 ];
 
 export function ProjectTabs({ projectId }: { projectId: string }) {

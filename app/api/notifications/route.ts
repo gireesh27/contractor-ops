@@ -3,10 +3,13 @@ import { Notification } from "@/lib/db/models";
 import { objectId } from "@/lib/data-access";
 import { getTenantContext } from "@/lib/tenant";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const tenant = await getTenantContext({ required: true });
   if (!tenant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const notifications = await Notification.find({ organizationId: objectId(tenant.organizationId), deletedAt: null })
+  const projectId = request.nextUrl.searchParams.get("projectId");
+  const filter: any = { organizationId: objectId(tenant.organizationId), deletedAt: null };
+  if (projectId) filter.projectId = objectId(projectId);
+  const notifications = await Notification.find(filter)
     .sort({ createdAt: -1 })
     .limit(50)
     .lean();

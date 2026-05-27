@@ -11,6 +11,7 @@ export interface TenantContext {
   role: string;
   userName?: string | null;
   userEmail?: string | null;
+  userImage?: string | null;
   organizationName: string;
   databaseReady: boolean;
   isSuperAdmin: boolean;
@@ -31,6 +32,7 @@ export async function getTenantContext(options: { required?: boolean } = {}): Pr
       role: session.user.role,
       userName: session.user.name,
       userEmail: session.user.email,
+      userImage: session.user.image,
       organizationName: "Database not connected",
       databaseReady: false,
       isSuperAdmin: Boolean(session.user.isSuperAdmin || isSuperAdminEmail(session.user.email))
@@ -59,6 +61,7 @@ export async function getTenantContext(options: { required?: boolean } = {}): Pr
     role: superAdmin ? "Super Admin" : normalizeRole(String(membership.role || session.user.role)),
     userName: user?.name || session.user.name,
     userEmail: user?.email || session.user.email,
+    userImage: user?.image || session.user.image,
     organizationName: String(organization.name || "ContractorOps"),
     databaseReady: true,
     isSuperAdmin: superAdmin

@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   UserCircle,
   XCircle,
+  type LucideIcon,
 } from "lucide-react";
 
 import { ProfilePhotoCropUpload } from "@/components/profile/ProfilePhotoCropUpload";
@@ -91,7 +92,7 @@ function notify(title: string, type: ToastType = "info") {
   );
 }
 
-const tabs: { id: ProfileTab; label: string; icon: React.ElementType }[] = [
+const tabs: { id: ProfileTab; label: string; icon: LucideIcon }[] = [
   { id: "profile", label: "Profile", icon: UserCircle },
   { id: "account", label: "Account", icon: Settings2 },
   { id: "email", label: "Email", icon: Mail },

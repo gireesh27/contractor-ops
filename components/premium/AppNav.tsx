@@ -61,7 +61,6 @@ const navItems = [
   { href: "/notifications", label: "Notifications", icon: Bell, roles: ["Super Admin", "Organization Owner", "Organization Admin", "Owner", "Admin", "Project Manager", "Site Engineer", "Accountant", "Viewer", "Member"] },
   { href: "/billing", label: "Subscription", icon: CreditCard, roles: ["Super Admin", "Organization Owner", "Owner"] },
   { href: "/settings", label: "Settings", icon: Settings, roles: ["Super Admin", "Organization Owner", "Organization Admin", "Owner", "Admin"] },
-  { href: "/profile", label: "Profile", icon: UserCircle, roles: ["Super Admin", "Organization Owner", "Organization Admin", "Owner", "Admin", "Project Manager", "Site Engineer", "Accountant", "Viewer", "Member"] },
   { href: "/admin", label: "Admin", icon: Shield, roles: ["Super Admin"] }
 ];
 
@@ -69,12 +68,14 @@ export function AppNav({
   children,
   organizationName,
   userName,
+  userImage,
   role,
   databaseReady
 }: {
   children: React.ReactNode;
   organizationName: string;
   userName?: string | null;
+  userImage?: string | null;
   role: string;
   databaseReady: boolean;
 }) {
@@ -201,9 +202,14 @@ export function AppNav({
                 Quick action
               </Link>
               <Link className="flex h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 transition hover:border-blueprint dark:border-white/10 dark:bg-white/10" href="/profile">
-                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blueprint text-xs font-black text-white">
-                  {(userName || "CO").split(" ").map((part) => part[0]).join("").slice(0, 2)}
-                </span>
+                {userImage ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img alt={userName || "User"} className="h-8 w-8 rounded-xl object-cover" src={userImage} />
+                ) : (
+                  <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blueprint text-xs font-black text-white">
+                    {(userName || "CO").split(" ").map((part) => part[0]).join("").slice(0, 2)}
+                  </span>
+                )}
                 <span className="hidden sm:block">
                   <span className="block max-w-40 truncate text-sm font-black">{organizationName}</span>
                   <span className="block text-xs font-semibold text-slate-500">{role}</span>

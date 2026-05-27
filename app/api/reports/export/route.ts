@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { buildExcel, buildProfessionalPdf, buildWord } from "@/lib/exports";
-import { listRecords } from "@/lib/data-access";
+import { getProjectReportRows, listRecords } from "@/lib/data-access";
 import { collectionModels, type CollectionName } from "@/lib/db/models";
 import { getTenantContext } from "@/lib/tenant";
 
@@ -15,8 +15,12 @@ export async function GET(request: NextRequest) {
   const format = request.nextUrl.searchParams.get("format") || "pdf";
   const projectId = request.nextUrl.searchParams.get("projectId") || undefined;
   const collection = isCollection(type) ? type : "reports";
-  const rows = tenant ? await listRecords(collection, tenant.organizationId, { projectId }) : [];
-  const exportInput = { title, subtitle: "Generated from tenant-scoped ContractorOps records", rows, preparedBy: tenant?.userName || "ContractorOps" };
+  const rows = tenant
+    ? type === "project-complete" && projectId
+      ? await getProjectReportRows(tenant.organizationId, projectId)
+      : await listRecords(collection, tenant.organizationId, { projectId })
+    : [];
+  const exportInput = { title, subtitle: projectId ? "Generated from selected project records only" : "Generated from tenant-scoped ContractorOps records", rows, preparedBy: tenant?.userName || "ContractorOps" };
 
   if (format === "xlsx") {
     return new Response(new Uint8Array(await buildExcel(exportInput)), {
@@ -32,6 +36,20 @@ export async function GET(request: NextRequest) {
       headers: {
         "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         "Content-Disposition": `attachment; filename="${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.docx"`
+      }
+    });
+  }
+
+  if (format === "csv") {
+    const headers = Array.from(new Set(rows.flatMap((row: any) => Object.keys(row || {}))));
+    const csv = [
+      headers.join(","),
+      ...rows.map((row: any) => headers.map((header) => `"${String(row?.[header] ?? "").replace(/"/g, '""')}"`).join(","))
+    ].join("\n");
+    return new Response(csv, {
+      headers: {
+        "Content-Type": "text/csv; charset=utf-8",
+        "Content-Disposition": `attachment; filename="${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.csv"`
       }
     });
   }

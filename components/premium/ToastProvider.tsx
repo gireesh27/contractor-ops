@@ -19,13 +19,7 @@ export function ToastProvider() {
       window.setTimeout(() => setToast(null), 5200);
     };
     window.addEventListener("contractorops:toast", onToast);
-    const timer = window.setTimeout(() => setToast({
-      title: "ContractorOps ready",
-      body: "Browser notifications can be enabled from the notification center.",
-      type: "info"
-    }), 900);
     return () => {
-      window.clearTimeout(timer);
       window.removeEventListener("contractorops:toast", onToast);
     };
   }, []);

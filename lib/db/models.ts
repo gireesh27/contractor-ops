@@ -206,6 +206,9 @@ const ProjectTaskSchema = new Schema(
   {
     ...baseFields,
     projectId: { type: ObjectId, ref: "Project", index: true },
+    phase: String,
+    milestone: String,
+    parentTaskId: { type: ObjectId, ref: "ProjectTask", index: true },
     title: String,
     description: String,
     assignedTo: { type: ObjectId, ref: "User" },
@@ -215,6 +218,9 @@ const ProjectTaskSchema = new Schema(
     status: { type: String, default: "Not Started" },
     workCategory: String,
     boqItemId: { type: ObjectId, ref: "BOQItem" },
+    requiredMaterials: [Mixed],
+    assignedWorkers: [Mixed],
+    dependencyTaskIds: [{ type: ObjectId, ref: "ProjectTask" }],
     attachments: [Mixed],
     comments: [Mixed],
     completionPercentage: { type: Number, default: 0 },
@@ -309,9 +315,14 @@ const MaterialTransactionSchema = new Schema(
     projectId: { type: ObjectId, ref: "Project", index: true },
     materialId: { type: ObjectId, ref: "Material", index: true },
     materialName: String,
+    taskId: { type: ObjectId, ref: "ProjectTask" },
+    boqItemId: { type: ObjectId, ref: "BOQItem" },
+    vendorId: { type: ObjectId, ref: "Vendor" },
+    billId: { type: ObjectId, ref: "Bill" },
     transactionType: String,
     quantity: { type: Number, default: 0 },
     unitRate: { type: Number, default: 0 },
+    expectedRate: { type: Number, default: 0 },
     totalCost: { type: Number, default: 0 },
     supplier: String,
     invoiceNumber: String,
@@ -359,6 +370,7 @@ const MeasurementSchema = new Schema(
     ...baseFields,
     projectId: { type: ObjectId, ref: "Project", index: true },
     boqItemId: { type: ObjectId, ref: "BOQItem" },
+    taskId: { type: ObjectId, ref: "ProjectTask" },
     workCategory: String,
     locationLabel: String,
     date: Date,
@@ -545,6 +557,9 @@ const NotificationSchema = new Schema(
   {
     ...baseFields,
     userId: { type: ObjectId, ref: "User", index: true },
+    projectId: { type: ObjectId, ref: "Project", index: true },
+    relatedRecordId: ObjectId,
+    dedupeKey: { type: String, index: true },
     type: String,
     title: String,
     body: String,
@@ -555,6 +570,7 @@ const NotificationSchema = new Schema(
   },
   baseOptions
 );
+NotificationSchema.index({ organizationId: 1, dedupeKey: 1 }, { unique: true, sparse: true });
 
 const SubscriptionPlanSchema = new Schema(
   {

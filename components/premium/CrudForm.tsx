@@ -61,8 +61,7 @@ export function CrudForm({
       form.reset();
       setMessage("Saved. The list has been refreshed.");
       router.refresh();
-    } catch (error) {
-      console.error(error);
+    } catch {
       setMessage("Something went wrong while saving the record.");
     } finally {
       setLoading(false);

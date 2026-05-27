@@ -1,6 +1,6 @@
 import { AppShell } from "@/components/AppShell";
+import { AiAssistantClient } from "@/components/ai/AiAssistantClient";
 import { ProjectTabs } from "@/components/ProjectTabs";
-import { ReportPreview } from "@/components/ReportPreview";
 import { SectionHeader } from "@/components/SectionHeader";
 import { MotionPage } from "@/components/premium/MotionPage";
 import { generateAiReport } from "@/lib/ai";
@@ -23,7 +23,10 @@ export default async function ProjectAiSummaryPage({ params }: PageProps) {
       <MotionPage>
         <SectionHeader eyebrow="AI Summary" title="Project intelligence" />
         <ProjectTabs projectId={id} />
-        <ReportPreview title={result.title} body={[result.summary, "", ...result.keyPoints.map((point) => `- ${point}`), "", result.professionalReport].join("\n")} whatsappMessage={result.whatsappVersion} />
+        <AiAssistantClient
+          initialResult={result}
+          projects={bundle ? [{ id, name: bundle.project.name, clientName: bundle.project.clientName, status: bundle.project.status }] : []}
+        />
       </MotionPage>
     </AppShell>
   );

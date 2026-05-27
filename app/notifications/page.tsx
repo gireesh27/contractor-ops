@@ -1,7 +1,8 @@
 import { ModulePage } from "@/components/premium/ModulePage";
 import { moduleRegistry } from "@/lib/module-config";
 
-export default function NotificationsPage() {
+export default async function NotificationsPage({ searchParams }: { searchParams: Promise<{ projectId?: string }> }) {
+  const { projectId } = await searchParams;
   const config = moduleRegistry.notifications;
-  return <ModulePage {...config} description="Notifications support overdue bills, task due dates, low stock, missing attendance, daily progress reminders, and push permission." />;
+  return <ModulePage {...config} projectId={projectId} showProjectFilter description="Notifications are created only for meaningful project events like overdue tasks, material price overruns, pending bills, and measurement approvals." />;
 }

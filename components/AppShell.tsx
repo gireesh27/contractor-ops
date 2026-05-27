@@ -11,6 +11,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
       organizationName={tenant?.organizationName || "ContractorOps"}
       role={tenant?.role || "Viewer"}
       userName={tenant?.userName}
+      userImage={tenant?.userImage}
     >
       {children}
       <ToastProvider />

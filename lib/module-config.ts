@@ -53,6 +53,8 @@ export const scheduleFields: CrudField[] = [
 ];
 
 export const taskFields: CrudField[] = [
+  { name: "phase", label: "Phase" },
+  { name: "milestone", label: "Milestone" },
   { name: "title", label: "Task title", required: true },
   { name: "description", label: "Description", type: "textarea" },
   { name: "startDate", label: "Start date", type: "date" },
@@ -60,6 +62,10 @@ export const taskFields: CrudField[] = [
   { name: "priority", label: "Priority", type: "select", options: ["Low", "Medium", "High", "Urgent"] },
   { name: "status", label: "Status", type: "select", options: ["Not Started", "In Progress", "Blocked", "Delayed", "Completed", "Cancelled"] },
   { name: "workCategory", label: "Work category" },
+  { name: "parentTaskId", label: "Parent task ID" },
+  { name: "dependencyTaskId", label: "Dependency task ID" },
+  { name: "assignedWorkers", label: "Assigned workers / crew", type: "textarea" },
+  { name: "requiredMaterials", label: "Materials required", type: "textarea" },
   { name: "completionPercentage", label: "Completion %", type: "number" }
 ];
 
@@ -117,8 +123,13 @@ export const materialTransactionFields: CrudField[] = [
   { name: "transactionType", label: "Transaction type", type: "select", options: ["Purchase/Inward", "Usage/Outward", "Return", "Wastage", "Transfer"] },
   { name: "quantity", label: "Quantity", type: "number" },
   { name: "unitRate", label: "Unit rate", type: "number" },
+  { name: "expectedRate", label: "Expected rate", type: "number" },
   { name: "supplier", label: "Supplier" },
   { name: "invoiceNumber", label: "Invoice number" },
+  { name: "taskId", label: "Task/activity ID" },
+  { name: "boqItemId", label: "BOQ item ID" },
+  { name: "vendorId", label: "Vendor ID" },
+  { name: "billId", label: "Bill ID" },
   { name: "dateTime", label: "Date and time", type: "datetime-local" },
   { name: "location", label: "Location" },
   { name: "remarks", label: "Remarks", type: "textarea" }
@@ -137,6 +148,8 @@ export const equipmentFields: CrudField[] = [
 
 export const measurementFields: CrudField[] = [
   { name: "workCategory", label: "Work category" },
+  { name: "boqItemId", label: "BOQ item ID" },
+  { name: "taskId", label: "Task/activity ID" },
   { name: "locationLabel", label: "Location/floor/room" },
   { name: "date", label: "Date", type: "date" },
   { name: "length", label: "Length", type: "number" },
