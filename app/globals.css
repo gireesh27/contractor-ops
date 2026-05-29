@@ -29,21 +29,92 @@ body {
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
+@keyframes theme-corner-reveal {
+  0% {
+    width: 0;
+    height: 0;
+    opacity: 1;
+  }
 
-.animate-theme-reveal {
-  animation: contractorops-theme-reveal 720ms ease-out forwards;
-  mix-blend-mode: normal;
+  100% {
+    width: 300vmax;
+    height: 300vmax;
+    opacity: 1;
+  }
 }
 
-@keyframes contractorops-theme-reveal {
-  from {
-    opacity: 0.88;
-    transform: translate(-50%, -50%) scale(1);
+@keyframes theme-corner-glow {
+  0% {
+    width: 0;
+    height: 0;
+    opacity: 0.7;
   }
-  to {
+
+  55% {
+    opacity: 0.45;
+  }
+
+  100% {
+    width: 180vmax;
+    height: 180vmax;
     opacity: 0;
-    transform: translate(-50%, -50%) scale(160);
   }
+}
+
+@keyframes theme-corner-wave {
+  0% {
+    width: 0;
+    height: 0;
+    opacity: 0.65;
+  }
+
+  45% {
+    opacity: 0.35;
+  }
+
+  100% {
+    width: 220vmax;
+    height: 220vmax;
+    opacity: 0;
+  }
+}
+
+.animate-theme-corner-reveal {
+  animation: theme-corner-reveal 900ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-theme-corner-glow {
+  animation: theme-corner-glow 950ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-theme-corner-wave {
+  animation: theme-corner-wave 1050ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.premium-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.55) transparent;
+}
+
+.premium-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.premium-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.premium-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.45);
+  border-radius: 999px;
+}
+
+.dark .premium-scrollbar {
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+}
+
+.dark .premium-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
 }
 
 .dark [class*="bg-white"] {
@@ -94,20 +165,6 @@ body {
   backdrop-filter: blur(18px);
 }
 
-.premium-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(148, 163, 184, 0.8) transparent;
-}
-
-.premium-scrollbar::-webkit-scrollbar {
-  height: 8px;
-  width: 8px;
-}
-
-.premium-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.8);
-  border-radius: 999px;
-}
 
 a {
   color: inherit;

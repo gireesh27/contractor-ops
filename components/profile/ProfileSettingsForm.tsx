@@ -295,9 +295,7 @@ export function ProfileSettingsForm({
     notify("Unsaved changes reset.", "info");
   }
 
-  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
+  async function saveProfileSettings() {
     if (!form.name.trim()) {
       notify("Name is required.", "error");
       return;
@@ -366,7 +364,19 @@ export function ProfileSettingsForm({
       const payload = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(payload.error || "Unable to update profile.");
+        console.error("Profile update failed:", {
+          status: response.status,
+          payload,
+        });
+
+        const message =
+          payload.error ||
+          payload.message ||
+          payload.errors?.[0]?.message ||
+          payload.errors?.[0] ||
+          "Unable to update profile.";
+
+        throw new Error(message);
       }
 
       notify("Settings saved successfully.", "success");
@@ -412,7 +422,19 @@ export function ProfileSettingsForm({
       const payload = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(payload.error || "Unable to update password.");
+        console.error("Password update failed:", {
+          status: response.status,
+          payload,
+        });
+
+        const message =
+          payload.error ||
+          payload.message ||
+          payload.errors?.[0]?.message ||
+          payload.errors?.[0] ||
+          "Unable to update password.";
+
+        throw new Error(message);
       }
 
       setPasswords({
@@ -433,7 +455,7 @@ export function ProfileSettingsForm({
   }
 
   return (
-    <form className="grid gap-5" onSubmit={onSubmit}>
+    <div className="grid gap-5">
       <section className="rounded-[2rem] border border-white/80 bg-white/86 p-3 shadow-glass backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80">
         <div className="flex gap-2 overflow-x-auto p-1">
           {tabs.map((tab) => {
@@ -882,7 +904,8 @@ export function ProfileSettingsForm({
           <button
             className="inline-flex h-12 items-center gap-2 rounded-2xl bg-slate-950 px-5 text-sm font-black text-white shadow-glow disabled:cursor-not-allowed disabled:opacity-60 dark:bg-safety-yellow dark:text-slate-950"
             disabled={!isDirty || loading}
-            type="submit"
+            onClick={saveProfileSettings}
+            type="button"
           >
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -893,6 +916,6 @@ export function ProfileSettingsForm({
           </button>
         </div>
       </div>
-    </form>
+    </div>
   );
 }

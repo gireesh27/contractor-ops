@@ -19,15 +19,87 @@ function makeModel<T = any>(name: string, schema: Schema): Model<T> {
 const UserSchema = new Schema(
   {
     name: String,
-    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+
     phone: String,
     image: String,
     passwordHash: String,
+
+    designation: String,
+    location: String,
+    bio: {
+      type: String,
+      maxlength: 240,
+    },
+
+    notificationPreferences: {
+      projectUpdates: { type: Boolean, default: true },
+      budgetAlerts: { type: Boolean, default: true },
+      paymentStatus: { type: Boolean, default: true },
+      invoiceUpdates: { type: Boolean, default: true },
+      adminMessages: { type: Boolean, default: true },
+      teamInvitations: { type: Boolean, default: true },
+      weeklyReports: { type: Boolean, default: false },
+      marketingEmails: { type: Boolean, default: false },
+      securityAlerts: { type: Boolean, default: true },
+    },
+
+    preferences: {
+      theme: {
+        type: String,
+        enum: ["light", "dark", "system"],
+        default: "system",
+      },
+      currency: {
+        type: String,
+        default: "INR",
+      },
+      dateFormat: {
+        type: String,
+        default: "DD MMM YYYY",
+      },
+      timeFormat: {
+        type: String,
+        enum: ["12-hour", "24-hour"],
+        default: "12-hour",
+      },
+      measurementUnits: {
+        type: String,
+        enum: ["metric", "imperial"],
+        default: "metric",
+      },
+      dashboardView: {
+        type: String,
+        default: "overview",
+      },
+      density: {
+        type: String,
+        enum: ["compact", "comfortable"],
+        default: "comfortable",
+      },
+    },
+
     lastLoginAt: Date,
-    activeOrganizationId: { type: ObjectId, ref: "Organization" },
-    deletedAt: { type: Date, default: null, index: true }
+
+    activeOrganizationId: {
+      type: ObjectId,
+      ref: "Organization",
+    },
+
+    deletedAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
   },
-  baseOptions
+  baseOptions,
 );
 
 const AccountSchema = new Schema(
